@@ -20,6 +20,7 @@ public class Product {
     private String name;
     private String description;
     private BigDecimal price;
+    private String image;
     private Integer quantity;
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Comment> comments=new ArrayList<>();
