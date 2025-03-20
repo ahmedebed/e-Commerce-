@@ -36,6 +36,7 @@ dependencies {
 
 	// MySQL Driver
 	runtimeOnly 'com.mysql:mysql-connector-j'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
 	// Development Tools
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'

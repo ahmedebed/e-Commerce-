@@ -1,6 +1,7 @@
 package com.example.demo.Config;
 
 import com.example.demo.Service.JwtService;
+
 import com.example.demo.repositories.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +21,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -27,30 +29,36 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 @EnableMethodSecurity
 public class SecurityConfig {
-    private final UserRepo userRepo;
-    private JwtService jwtService;
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http ) throws Exception{
-        http
-                .csrf(csrf ->csrf.disable())
-                .authorizeHttpRequests(auth->auth
-                        .requestMatchers("/").permitAll()
-                                .requestMatchers("/images/**").permitAll()
-                                .requestMatchers("/index.html").permitAll()
-                                .requestMatchers("/api/auth/**").permitAll()
-                                .requestMatchers(HttpMethod.GET,"/api/products/**").permitAll()
-                                .requestMatchers("/api/auth/change-password").authenticated()
-                                .anyRequest().authenticated()
-                        )
-                .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
-        return http.build();
+   private final UserRepo userRepo;
+    private final JwtService jwtService;
 
-    }
     @Bean
-    public JwtFilter jwtFilter(){
-        return new JwtFilter(jwtService,userDetailsService());
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth-> auth
+                        .requestMatchers("/").permitAll()
+                        .requestMatchers("/images/**").permitAll()
+                        .requestMatchers("/index.html").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                        .requestMatchers("/api/auth/change-password").authenticated()
+
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
+
+    @Bean
+    public JwtFilter jwtAuthenticationFilter(){
+        return new JwtFilter(jwtService, userDetailsService());
+    }
+
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
@@ -62,13 +70,13 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService(){
         return username -> (UserDetails) userRepo.findByEmail(username)
-                .orElseThrow(()->new UsernameNotFoundException("User Not found"));
-     }
-     @Bean
-    public AuthenticationProvider authenticationProvider(){
-         DaoAuthenticationProvider authenticationProvider=new DaoAuthenticationProvider();
-         authenticationProvider.setUserDetailsService(userDetailsService());
-         authenticationProvider.setPasswordEncoder(passwordEncoder());
-         return authenticationProvider;
-     }
+                .orElseThrow(()-> new UsernameNotFoundException("User not found"));
+    }
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider(){
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService());
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
 }

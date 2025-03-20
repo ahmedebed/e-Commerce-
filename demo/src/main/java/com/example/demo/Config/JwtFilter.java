@@ -1,5 +1,4 @@
 package com.example.demo.Config;
-
 import com.example.demo.Service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,17 +28,19 @@ public class JwtFilter extends OncePerRequestFilter {
         String token=null;
         if(authHeader !=null &&authHeader.startsWith("Bearer ")){
             token =authHeader.substring(7);
-            username=jwtService.extractUserName(token);
+            username=jwtService.extractUsername(token);
 
         }
-        if(username !=null && SecurityContextHolder.getContext().getAuthentication() ==null){
-            UserDetails userDetails=this.userDetailsService.loadUserByUsername(username);
-            if(jwtService.validateToken(token,userDetails)){
-                UsernamePasswordAuthenticationToken authenticationToken =new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+        if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
+            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            if(jwtService.validateToken(token, userDetails)){
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
             }
+        }
             filterChain.doFilter(request,response);
         }
-    }
+
 }
